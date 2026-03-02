@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>verifiedcar.com — Sovereign Vehicle Identity</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #00122e;
+    --navy-mid: #001f5b;
+    --gold: #c8a84b;
+    --gold-light: #e8c96a;
+    --white: #f5f5f0;
+    --gray: #8a8a8a;
+    --gray-light: #d4d4cc;
+    --red-alert: #c62828;
+    --green-safe: #1b5e20;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,168,75,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,168,75,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    border-bottom: 1px solid rgba(200,168,75,0.15);
+    background: rgba(0,18,46,0.92);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .nav-logo span { color: var(--white); }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--gold); }
+
+  .nav-cta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--navy);
+    background: var(--gold);
+    padding: 10px 24px;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .nav-cta:hover { background: var(--gold-light); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 60px 80px;
+    overflow: hidden;
+  }
+
+  .hero-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 9vw, 130px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .hero-title .accent { color: var(--gold); }
+
+  .hero-subtitle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 4.5vw, 64px);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--gray);
+    margin-bottom: 40px;
+  }
+
+  .hero-desc {
+    max-width: 480px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--gray-light);
+    margin-bottom: 48px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--navy);
+    background: var(--gold);
+    padding: 16px 36px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s;
+  }
+
+  .btn-primary:hover { background: var(--gold-light); }
+
+  .btn-secondary {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(200,168,75,0.4);
+    padding: 16px 36px;
+    text-decoration: none;
+    display: inline-block;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--gold); }
+
+  /* ── HERO METRICS ── */
+  .hero-metrics {
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 280px;
+  }
+
+  .metric-card {
+    background: rgba(0,31,91,0.6);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-left: 3px solid var(--gold);
+    padding: 20px 24px;
+    backdrop-filter: blur(8px);
+  }
+
+  .metric-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  /* ── PHYSICS BAR ── */
+  .physics-bar {
+    position: relative;
+    z-index: 1;
+    background: rgba(0,31,91,0.4);
+    border-top: 1px solid rgba(200,168,75,0.15);
+    border-bottom: 1px solid rgba(200,168,75,0.15);
+    padding: 40px 60px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .physics-item { }
+
+  .physics-item.danger .physics-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: #ef5350;
+    line-height: 1;
+  }
+
+  .physics-item.safe .physics-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: #66bb6a;
+    line-height: 1;
+    text-align: right;
+  }
+
+  .physics-item .physics-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 6px;
+  }
+
+  .physics-item.safe .physics-desc { text-align: right; }
+
+  .physics-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .physics-divider-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+  }
+
+  .physics-divider-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  /* ── ARCHITECTURE ── */
+  .section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 60px;
+  }
+
+  .section-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 5vw, 72px);
+    color: var(--white);
+    line-height: 0.95;
+    margin-bottom: 48px;
+  }
+
+  /* Layer stack */
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 700px;
+  }
+
+  .layer {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 24px;
+    background: rgba(0,31,91,0.3);
+    border: 1px solid rgba(200,168,75,0.1);
+    border-left: 3px solid transparent;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: default;
+  }
+
+  .layer:hover {
+    background: rgba(0,31,91,0.6);
+    border-left-color: var(--gold);
+  }
+
+  .layer.active {
+    background: rgba(0,31,91,0.7);
+    border-left-color: var(--gold);
+    border-color: rgba(200,168,75,0.3);
+  }
+
+  .layer-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: rgba(200,168,75,0.3);
+  }
+
+  .layer.active .layer-num { color: var(--gold); }
+
+  .layer-info { }
+
+  .layer-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+
+  .layer-tech {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .layer-latency {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    text-align: right;
+  }
+
+  /* ── REGISTRY STATUS ── */
+  .registry-bar {
+    position: relative;
+    z-index: 1;
+    background: rgba(0,31,91,0.5);
+    border-top: 1px solid rgba(200,168,75,0.15);
+    padding: 50px 60px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+
+  .registry-item {
+    padding: 30px 24px;
+    border: 1px solid rgba(200,168,75,0.1);
+    border-top: 3px solid transparent;
+  }
+
+  .registry-item.confirmed { border-top-color: #66bb6a; }
+  .registry-item.pending { border-top-color: var(--gold); }
+  .registry-item.verified { border-top-color: #42a5f5; }
+
+  .registry-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .registry-item.confirmed .registry-status { color: #66bb6a; }
+  .registry-item.pending .registry-status { color: var(--gold); }
+  .registry-item.verified .registry-status { color: #42a5f5; }
+
+  .registry-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .registry-detail {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--gray);
+    line-height: 1.5;
+  }
+
+  /* ── LICENSING ── */
+  .license-section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .license-intro { }
+
+  .license-tiers {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .tier {
+    padding: 28px;
+    border: 1px solid rgba(200,168,75,0.15);
+    background: rgba(0,31,91,0.3);
+  }
+
+  .tier.featured {
+    border-color: var(--gold);
+    background: rgba(0,31,91,0.6);
+  }
+
+  .tier-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .tier-desc {
+    font-size: 13px;
+    color: var(--gray-light);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .tier-action {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tier-action::after {
+    content: '→';
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgba(200,168,75,0.2);
+    padding: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+    align-items: end;
+  }
+
+  .footer-brand {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .footer-tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--gold); }
+
+  .footer-authority {
+    text-align: right;
+  }
+
+  .footer-authority-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 6px;
+  }
+
+  .footer-authority-email {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+  }
+
+  .footer-bottom {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgba(200,168,75,0.1);
+    padding: 20px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-bottom-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .footer-bottom-gate {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-tag { animation: fadeUp 0.6s ease forwards; }
+  .hero-title { animation: fadeUp 0.6s 0.1s ease forwards; opacity: 0; }
+  .hero-subtitle { animation: fadeUp 0.6s 0.2s ease forwards; opacity: 0; }
+  .hero-desc { animation: fadeUp 0.6s 0.3s ease forwards; opacity: 0; }
+  .hero-actions { animation: fadeUp 0.6s 0.4s ease forwards; opacity: 0; }
+  .hero-metrics { animation: fadeUp 0.8s 0.3s ease forwards; opacity: 0; }
+
+  /* ── DID BADGE ── */
+  .did-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,31,91,0.8);
+    border: 1px solid rgba(200,168,75,0.3);
+    padding: 10px 18px;
+    margin-bottom: 32px;
+  }
+
+  .did-badge-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .did-badge-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">verified<span>car</span>.com</div>
+  <ul class="nav-links">
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#registry">Registry</a></li>
+    <li><a href="#licensing">Licensing</a></li>
+    <li><a href="#spec">Specification</a></li>
+  </ul>
+  <a href="mailto:authority@hardcodedlogic.com" class="nav-cta">Request Access</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">W3C DID Method — did:verifiedcar</div>
+
+  <div class="did-badge">
+    <div class="did-badge-dot"></div>
+    <span class="did-badge-text">Sovereign Root of Trust — Dubai, UAE</span>
+  </div>
+
+  <h1 class="hero-title">SOVEREIGN<br><span class="accent">VEHICLE</span><br>IDENTITY</h1>
+  <h2 class="hero-subtitle">Level 5 Authentication Infrastructure</h2>
+
+  <p class="hero-desc">
+    The only neutral, domain-anchored root of trust for Level 5 autonomous vehicle authentication.
+    Sub-1ms local handshake. Auth precedes transport. 2.67cm safety margin at 120 km/h.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#licensing" class="btn-primary">Request License</a>
+    <a href="#spec" class="btn-secondary">View Specification</a>
+  </div>
+
+  <!-- Metrics -->
+  <div class="hero-metrics">
+    <div class="metric-card">
+      <div class="metric-value">&lt;800μs</div>
+      <div class="metric-label">Handshake Total</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">2.67cm</div>
+      <div class="metric-label">Safety Margin @ 120km/h</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">2.15M+</div>
+      <div class="metric-label">Operations Verified</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">10yr</div>
+      <div class="metric-label">ICANN Domain Lock</div>
+    </div>
+  </div>
+</section>
+
+<!-- PHYSICS BAR -->
+<div class="physics-bar">
+  <div class="physics-item danger">
+    <div class="physics-num">3.33m</div>
+    <div class="physics-desc">Level 4 — 100ms handshake — Fatal collision window</div>
+  </div>
+  <div class="physics-divider">
+    <div class="physics-divider-line"></div>
+    <div class="physics-divider-label">At 120 km/h</div>
+    <div class="physics-divider-line"></div>
+  </div>
+  <div class="physics-item safe">
+    <div class="physics-num">2.67cm</div>
+    <div class="physics-desc">Level 5 — did:verifiedcar — Within orchestration tolerance</div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<section class="section" id="architecture">
+  <div class="section-tag">Protocol Stack</div>
+  <h2 class="section-title">AUTH ≠<br>TRANSPORT</h2>
+
+  <div class="layer-stack">
+    <div class="layer">
+      <div class="layer-num">04</div>
+      <div class="layer-info">
+        <div class="layer-name">V2X Transport</div>
+        <div class="layer-tech">DSRC / C-V2X / 5G-NR</div>
+      </div>
+      <div class="layer-latency">500μs–10ms</div>
+    </div>
+    <div class="layer">
+      <div class="layer-num">03</div>
+      <div class="layer-info">
+        <div class="layer-name">Token Carrier</div>
+        <div class="layer-tech">Signed Identity Token</div>
+      </div>
+      <div class="layer-latency">&lt;10μs</div>
+    </div>
+    <div class="layer">
+      <div class="layer-num">02</div>
+      <div class="layer-info">
+        <div class="layer-name">Orchestration</div>
+        <div class="layer-tech">Level 5 Coordination Logic</div>
+      </div>
+      <div class="layer-latency">&lt;100μs</div>
+    </div>
+    <div class="layer active">
+      <div class="layer-num">01</div>
+      <div class="layer-info">
+        <div class="layer-name">Handshake Auth — HERE</div>
+        <div class="layer-tech">Mojo Enclave · ROM_LUT_0x4A2F · SIMD · GC-Free</div>
+      </div>
+      <div class="layer-latency">&lt;800μs</div>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTRY STATUS -->
+<div class="registry-bar" id="registry">
+  <div class="registry-item confirmed">
+    <div class="registry-status">✓ Confirmed</div>
+    <div class="registry-title">Documentary Attribution</div>
+    <div class="registry-detail">HCL-TVR-001-REBUTTAL<br>February 22, 2026</div>
+  </div>
+  <div class="registry-item confirmed">
+    <div class="registry-status">✓ Archived</div>
+    <div class="registry-title">W3C DID Submission</div>
+    <div class="registry-detail">DID Working Group<br>Public Record</div>
+  </div>
+  <div class="registry-item pending">
+    <div class="registry-status">◎ Pending</div>
+    <div class="registry-title">W3C Method Registry</div>
+    <div class="registry-detail">did:verifiedcar<br>Registration in progress</div>
+  </div>
+  <div class="registry-item verified">
+    <div class="registry-status">✓ Verified</div>
+    <div class="registry-title">Domain Ownership</div>
+    <div class="registry-detail">ICANN 10-year lock<br>verifiedcar.com</div>
+  </div>
+</div>
+
+<!-- LICENSING -->
+<section class="license-section" id="licensing">
+  <div class="license-intro">
+    <div class="section-tag">Access Model</div>
+    <h2 class="section-title">THE<br>GATE<br>IS BUILT</h2>
+    <p style="font-size:14px;color:var(--gray-light);line-height:1.7;max-width:360px;margin-top:20px;">
+      verifiedcar.com is the neutral root of trust for Level 5 authentication.
+      No manufacturer conflict. No competitive bias. One universal identity anchor.
+    </p>
+    <p style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;color:var(--gold);margin-top:24px;text-transform:uppercase;">
+      All licensing via authority@hardcodedlogic.com
+    </p>
+  </div>
+
+  <div class="license-tiers">
+    <div class="tier">
+      <div class="tier-name">Open Resolver</div>
+      <div class="tier-desc">Free DID resolution for research, testing, and standards development. Query did:verifiedcar identifiers publicly.</div>
+      <a href="#spec" class="tier-action">View Documentation</a>
+    </div>
+    <div class="tier featured">
+      <div class="tier-name">Commercial Implementation</div>
+      <div class="tier-desc">Full DNS access and did:verifiedcar identity issuance for vehicle manufacturers and infrastructure operators.</div>
+      <a href="mailto:authority@hardcodedlogic.com" class="tier-action">Request License</a>
+    </div>
+    <div class="tier">
+      <div class="tier-name">Government Infrastructure</div>
+      <div class="tier-desc">National-level deployment for smart city and autonomous mobility programs. Custom agreements via direct contact.</div>
+      <a href="mailto:authority@hardcodedlogic.com" class="tier-action">Contact Authority</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-brand">VERIFIEDCAR</div>
+    <div class="footer-tagline">Sovereign Vehicle Identity Infrastructure</div>
+  </div>
+  <ul class="footer-links">
+    <li><a href="#spec">DID Method Specification</a></li>
+    <li><a href="https://verifiedcar.com/resolve">Live Resolver</a></li>
+    <li><a href="https://verifiedcar.com/.well-known/did-configuration.json">DID Configuration</a></li>
+    <li><a href="https://hardcodedlogic.com">Hardcoded Logic</a></li>
+  </ul>
+  <div class="footer-authority">
+    <div class="footer-authority-label">Official Authority</div>
+    <div class="footer-authority-email">authority@hardcodedlogic.com</div>
+  </div>
+</footer>
+
+<div class="footer-bottom">
+  <div class="footer-bottom-text">© 2026 Hardcoded Logic · Tamer Maher Eldebes · Dubai, UAE</div>
+  <div class="footer-bottom-gate">The Logic Is Hardcoded.</div>
+</div>
+
+</body>
+</html>

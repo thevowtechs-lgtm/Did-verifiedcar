@@ -2,24 +2,35 @@
  * did:verifiedcar DID Resolver
  * Hardcoded Logic — Sovereign Infrastructure
  * authority@hardcodedlogic.com
- * 
- * Deploy on VPS at verifiedcar.com
- * Resolves did:verifiedcar identifiers in O(1) — no DNS dependency
+ *
+ * Production Server — verifiedcar.com
  */
 
 const express = require('express');
 const crypto = require('crypto');
+const path = require('path');
+
 const app = express();
-app.use(express.static('public'));
+
 app.use(express.json());
+app.use(express.static('public'));
+
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
-// ROM_LUT_0x4A2F — Static compile-time lookup table
-// Hardcoded root constants — no runtime resolution required
+/* ──────────────────────────────────────────────
+   STATIC SPECIFICATION ROUTE
+   Accessible at:
+   https://verifiedcar.com/spec/
+────────────────────────────────────────────── */
+app.use('/spec', express.static(path.join(__dirname, 'public', 'spec')));
+
+/* ──────────────────────────────────────────────
+   ROOT CONSTANTS (ROM Lookup Table)
+────────────────────────────────────────────── */
 const ROM_LUT_0x4A2F = {
   root: {
     id: 'did:verifiedcar:root',
@@ -33,15 +44,20 @@ const ROM_LUT_0x4A2F = {
   }
 };
 
-// DID Document template
+/* ──────────────────────────────────────────────
+   DID DOCUMENT BUILDER
+────────────────────────────────────────────── */
 function buildDIDDocument(did) {
-  const vehicleId = did.replace('did:verifiedcar:', '');
   const keyId = `${did}#auth-key-1`;
   const timestamp = new Date().toISOString();
 
-  // Simulate ECDSA key generation (in production: Mojo Enclave generates this)
-  const keyPair = crypto.generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
-  const publicKey = keyPair.publicKey.export({ type: 'spki', format: 'der' }).toString('hex');
+  const keyPair = crypto.generateKeyPairSync('ec', {
+    namedCurve: 'secp256k1'
+  });
+
+  const publicKey = keyPair.publicKey
+    .export({ type: 'spki', format: 'der' })
+    .toString('hex');
 
   return {
     "@context": [
@@ -55,7 +71,7 @@ function buildDIDDocument(did) {
         "id": keyId,
         "type": "EcdsaSecp256k1VerificationKey2019",
         "controller": did,
-        "publicKeyHex": publicKey.substring(0, 64) // truncated for demo
+        "publicKeyHex": publicKey.substring(0, 64)
       }
     ],
     "authentication": [keyId],
@@ -80,15 +96,39 @@ function buildDIDDocument(did) {
   };
 }
 
-// ─── ROUTES ────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────
+   ROUTES
+────────────────────────────────────────────── */
+
+/* Home */
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/spec/index.html');
+  res.sendFile(path.join(__dirname, 'verifiedcar-landing.html'));
 });
-// Resolve a DID
+
+/* ───────── ROOT DID (MUST BE ABOVE GENERIC) ───────── */
+app.get('/resolve/did:verifiedcar:root', (req, res) => {
+  res.json({
+    didDocument: {
+      "@context": ["https://www.w3.org/ns/did/v1"],
+      "id": "did:verifiedcar:root",
+      "controller": "did:verifiedcar:root",
+      "description": "Hardcoded Logic Sovereign Root — verifiedcar.com",
+      "authority": "authority@hardcodedlogic.com",
+      "hardcodedLogic": {
+        "rootOfTrust": "verifiedcar.com",
+        "icannRegistration": "10-year time-lock",
+        "specification": "https://verifiedcar.com/spec/",
+        "sovereignArchitect": "Tamer Maher Eldebes"
+      }
+    }
+  });
+});
+
+/* ───────── GENERIC RESOLVER (MUST BE AFTER ROOT) ───────── */
 app.get('/resolve/:did', (req, res) => {
   const did = decodeURIComponent(req.params.did);
-  
+
   if (!did.startsWith('did:verifiedcar:')) {
     return res.status(400).json({
       error: 'Invalid DID method. This resolver only handles did:verifiedcar'
@@ -117,26 +157,29 @@ app.get('/resolve/:did', (req, res) => {
   });
 });
 
-// Root DID document
-app.get('/resolve/did:verifiedcar:root', (req, res) => {
+/* ───────── WELL-KNOWN DID CONFIGURATION ───────── */
+app.get('/.well-known/did.json', (req, res) => {
   res.json({
-    didDocument: {
-      "@context": ["https://www.w3.org/ns/did/v1"],
-      "id": "did:verifiedcar:root",
-      "controller": "did:verifiedcar:root",
-      "description": "Hardcoded Logic Sovereign Root — verifiedcar.com",
-      "authority": "authority@hardcodedlogic.com",
-      "hardcodedLogic": {
-        "rootOfTrust": "verifiedcar.com",
-        "icannRegistration": "10-year time-lock",
-        "specification": "https://verifiedcar.com/spec/",
-        "sovereignArchitect": "Tamer Maher Eldebes"
-      }
-    }
+    "@context": [
+      "https://www.w3.org/ns/did/v1",
+      "https://w3id.org/security/suites/ed25519-2020/v1"
+    ],
+    "id": "did:verifiedcar:verifiedcar.com",
+    "controller": "did:verifiedcar:verifiedcar.com",
+    "verificationMethod": [{
+      "id": "did:verifiedcar:verifiedcar.com#key-1",
+      "type": "Ed25519VerificationKey2020",
+      "controller": "did:verifiedcar:verifiedcar.com"
+    }],
+    "service": [{
+      "id": "did:verifiedcar:verifiedcar.com#resolver",
+      "type": "SovereignIdentityResolver",
+      "serviceEndpoint": "https://verifiedcar.com/resolve"
+    }]
   });
 });
 
-// W3C DID Configuration
+/* ───────── W3C DID DOMAIN LINKAGE ───────── */
 app.get('/.well-known/did-configuration.json', (req, res) => {
   res.json({
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",
@@ -158,7 +201,7 @@ app.get('/.well-known/did-configuration.json', (req, res) => {
   });
 });
 
-// Health check
+/* Health Check */
 app.get('/health', (req, res) => {
   res.json({
     status: 'operational',
@@ -171,8 +214,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Start server
+/* ──────────────────────────────────────────────
+   START SERVER
+────────────────────────────────────────────── */
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`did:verifiedcar Resolver running on port ${PORT}`);
   console.log(`Root of Trust: verifiedcar.com`);
