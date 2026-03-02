@@ -1,4 +1,4 @@
-name: Deploy to EC2 (Production Safe)
+name: Did Verified Car Deployment
 
 on:
   push:
