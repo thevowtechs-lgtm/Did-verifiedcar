@@ -4,8 +4,8 @@
   "description": "DID Resolver for did:verifiedcar — Hardcoded Logic Sovereign Infrastructure",
   "main": "resolver/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node resolver/server.js",
+    "dev": "nodemon resolver/server.js"
   },
   "keywords": [
     "did",

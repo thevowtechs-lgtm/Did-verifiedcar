@@ -9,7 +9,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
-
+const ROOT_DIR = path.join(__dirname, '..');
 const app = express();
 
 app.use(express.json());
@@ -26,7 +26,8 @@ app.use((req, res, next) => {
    Accessible at:
    https://verifiedcar.com/spec/
 ────────────────────────────────────────────── */
-app.use('/spec', express.static(path.join(__dirname, 'public', 'spec')));
+app.use('/spec', express.static(path.join(ROOT_DIR, 'spec')));
+
 
 /* ──────────────────────────────────────────────
    ROOT CONSTANTS (ROM Lookup Table)
@@ -103,7 +104,7 @@ function buildDIDDocument(did) {
 /* Home */
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'verifiedcar-landing.html'));
+  res.sendFile(path.join(ROOT_DIR, 'verifiedcar-landing.html'));
 });
 
 /* ───────── ROOT DID (MUST BE ABOVE GENERIC) ───────── */
