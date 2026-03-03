@@ -43,9 +43,7 @@ jobs:
             npm ci --production
 
             echo "🔁 Restarting application with PM2..."
-
-            pm2 delete did-verifiedcar || true
-            pm2 start resolver/server.js --name did-verifiedcar
+            pm2 restart did-verifiedcar || pm2 start resolver/server.js --name did-verifiedcar
             pm2 save
 
             echo "✅ Deployment completed successfully!"
