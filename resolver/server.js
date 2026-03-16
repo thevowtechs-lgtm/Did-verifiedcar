@@ -27,6 +27,7 @@ app.use((req, res, next) => {
    https://verifiedcar.com/spec/
 ────────────────────────────────────────────── */
 app.use('/spec', express.static(path.join(ROOT_DIR, 'spec')));
+app.use('/demo', express.static(path.join(ROOT_DIR, 'demo')));
 
 
 /* ──────────────────────────────────────────────
