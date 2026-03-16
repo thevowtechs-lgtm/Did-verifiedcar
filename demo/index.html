@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>did:verifiedcar — Live Sovereign Identity Demo — verifiedcar.com/demo</title>
+<meta name="description" content="Live demonstration: autonomous vehicle resolving sovereign machine identity through the W3C DID stack in real time. did:verifiedcar · did:viewonwebsite · did:verifiedhz · did:level5">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700;900&display=swap');
+
+:root {
+  --cyan: #00e5ff;
+  --green: #00ff88;
+  --amber: #ff9500;
+  --white: #ffffff;
+  --red: #ff3b3b;
+  --bg: #020408;
+  --bg2: #050d12;
+  --bg3: #081520;
+  --border: #0d2030;
+  --text: #8ab0c0;
+  --mono: 'Share Tech Mono', monospace;
+  --sans: 'Barlow', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* GRID BG */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* TOPBAR */
+.topbar {
+  position: relative;
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(2,4,8,0.95);
+  backdrop-filter: blur(10px);
+}
+.topbar-left { color: var(--cyan); font-size: 0.78rem; }
+.topbar-left a { color: var(--cyan); text-decoration: none; }
+.topbar-right { font-size: 0.72rem; color: #2a4050; }
+.topbar-status { display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* HERO */
+.hero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 56px 32px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.hero-tag {
+  font-size: 0.7rem;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+.hero h1 {
+  font-family: var(--sans);
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  line-height: 1.1;
+}
+.hero h1 .accent { color: var(--cyan); }
+.hero-sub {
+  font-size: 0.82rem;
+  color: var(--text);
+  max-width: 560px;
+  margin: 0 auto 24px;
+  line-height: 1.8;
+}
+.hero-q {
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  color: var(--white);
+  font-style: italic;
+  opacity: 0.6;
+  margin-bottom: 32px;
+}
+
+/* START BUTTON */
+.start-btn {
+  display: inline-block;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  padding: 14px 40px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.start-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--cyan);
+  transform: translateX(-100%);
+  transition: transform 0.3s;
+  z-index: -1;
+}
+.start-btn:hover { color: #000; }
+.start-btn:hover::before { transform: translateX(0); }
+.start-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* MAIN DEMO LAYOUT */
+.demo-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0;
+  min-height: calc(100vh - 200px);
+}
+
+/* ROAD SCENE */
+.road-scene {
+  border-right: 1px solid var(--border);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 500px;
+}
+
+/* ROAD */
+.road-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  height: 300px;
+}
+
+.road {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: #0a1020;
+  border-top: 2px solid #1a3040;
+  border-bottom: 2px solid #1a3040;
+  overflow: hidden;
+}
+
+.road-line {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #1a3040 0, #1a3040 30px, transparent 30px, transparent 60px);
+  width: 200%;
+  animation: roadMove 1s linear infinite;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.road-line.active { opacity: 1; }
+@keyframes roadMove { from{transform:translateY(-50%) translateX(0);} to{transform:translateY(-50%) translateX(-60px);} }
+
+/* VEHICLE */
+.vehicle-wrap {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: all 0.5s;
+}
+
+.vehicle {
+  width: 120px;
+  height: 48px;
+  position: relative;
+}
+
+/* Car SVG-style CSS */
+.car-body {
+  width: 120px;
+  height: 32px;
+  background: linear-gradient(180deg, #1a4060 0%, #0d2030 100%);
+  border: 1px solid var(--cyan);
+  border-radius: 6px 6px 2px 2px;
+  position: absolute;
+  bottom: 8px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.car-top {
+  width: 70px;
+  height: 22px;
+  background: linear-gradient(180deg, #0d2030 0%, #1a4060 100%);
+  border: 1px solid var(--cyan);
+  border-radius: 6px 6px 0 0;
+  position: absolute;
+  bottom: 38px;
+  left: 25px;
+  transition: border-color 0.3s;
+}
+.car-wheel {
+  width: 18px;
+  height: 18px;
+  background: #050d12;
+  border: 2px solid #1a3040;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -2px;
+  transition: border-color 0.3s;
+}
+.car-wheel.left { left: 12px; }
+.car-wheel.right { right: 12px; }
+.car-wheel.spinning { animation: spin 0.5s linear infinite; }
+@keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+.car-headlight {
+  width: 8px;
+  height: 6px;
+  background: #1a4060;
+  position: absolute;
+  right: -2px;
+  top: 10px;
+  border-radius: 0 2px 2px 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* Vehicle states */
+.vehicle.idle .car-body { border-color: #1a3040; box-shadow: none; }
+.vehicle.idle .car-top { border-color: #1a3040; }
+.vehicle.idle .car-wheel { border-color: #1a3040; }
+.vehicle.idle .car-headlight { background: #1a3040; }
+
+.vehicle.verifying .car-body { border-color: var(--amber); box-shadow: 0 0 20px rgba(255,149,0,0.3); }
+.vehicle.verifying .car-top { border-color: var(--amber); }
+.vehicle.verifying .car-wheel { border-color: var(--amber); }
+.vehicle.verifying .car-headlight { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+
+.vehicle.certified .car-body { border-color: var(--green); box-shadow: 0 0 30px rgba(0,255,136,0.4); }
+.vehicle.certified .car-top { border-color: var(--green); }
+.vehicle.certified .car-wheel { border-color: var(--green); }
+.vehicle.certified .car-headlight { background: var(--green); box-shadow: 0 0 15px var(--green); }
+
+.vehicle.failed .car-body { border-color: var(--red); box-shadow: 0 0 20px rgba(255,59,59,0.3); }
+.vehicle.failed .car-top { border-color: var(--red); }
+
+/* DID RESOLUTION RINGS */
+.resolution-rings {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -80%);
+  pointer-events: none;
+}
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+}
+.ring.l1 { width: 80px; height: 80px; border-color: var(--cyan); }
+.ring.l2 { width: 140px; height: 140px; border-color: var(--green); }
+.ring.l3 { width: 200px; height: 200px; border-color: var(--amber); }
+.ring.l5 { width: 260px; height: 260px; border-color: var(--white); }
+
+.ring.expand {
+  animation: ringExpand 1.5s ease-out forwards;
+}
+@keyframes ringExpand {
+  0% { transform: translate(-50%,-50%) scale(0); opacity: 0.8; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+}
+
+/* SCENE INFO */
+.scene-info {
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  font-size: 0.72rem;
+  color: #1a3040;
+}
+.scene-speed {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  font-size: 0.72rem;
+  color: var(--cyan);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.scene-speed.visible { opacity: 1; }
+
+/* CERTIFICATION BADGE */
+.cert-badge {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,255,136,0.1);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 6px 16px;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.cert-badge.visible { opacity: 1; }
+
+/* TERMINAL PANEL */
+.terminal-panel {
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.terminal-title { font-size: 0.72rem; color: var(--cyan); letter-spacing: 1px; }
+.terminal-dots { display: flex; gap: 6px; }
+.tdot { width: 8px; height: 8px; border-radius: 50%; }
+.tdot.r { background: #ff5f57; }
+.tdot.y { background: #febc2e; }
+.tdot.g { background: #28c840; }
+
+.terminal-body {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+  line-height: 1.9;
+  max-height: 480px;
+}
+
+.log-line {
+  display: flex;
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
+  margin-bottom: 2px;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:translateY(0);} }
+
+.log-time { color: #1a3040; min-width: 70px; }
+.log-type { min-width: 60px; font-size: 0.68rem; padding: 1px 6px; border: 1px solid; }
+.log-type.sys { color: #2a4050; border-color: #2a4050; }
+.log-type.did { color: var(--cyan); border-color: rgba(0,229,255,0.3); }
+.log-type.ok { color: var(--green); border-color: rgba(0,255,136,0.3); }
+.log-type.warn { color: var(--amber); border-color: rgba(255,149,0,0.3); }
+.log-type.err { color: var(--red); border-color: rgba(255,59,59,0.3); }
+.log-type.cert { color: var(--white); border-color: rgba(255,255,255,0.3); }
+.log-msg { color: var(--text); flex: 1; }
+.log-msg .hi { color: var(--white); }
+.log-msg .cyan { color: var(--cyan); }
+.log-msg .green { color: var(--green); }
+.log-msg .amber { color: var(--amber); }
+.log-msg .white { color: var(--white); }
+
+/* LAYER STATUS PANEL */
+.layer-status {
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.layer-item {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  transition: all 0.3s;
+}
+.layer-item.l5-item { grid-column: 1/-1; }
+
+.layer-item.pending { border-color: #0d2030; }
+.layer-item.active { border-color: var(--amber); background: rgba(255,149,0,0.05); }
+.layer-item.done-1 { border-color: var(--cyan); background: rgba(0,229,255,0.05); }
+.layer-item.done-2 { border-color: var(--green); background: rgba(0,255,136,0.05); }
+.layer-item.done-3 { border-color: var(--amber); background: rgba(255,149,0,0.05); }
+.layer-item.done-5 { border-color: var(--white); background: rgba(255,255,255,0.03); }
+
+.layer-name { font-size: 0.68rem; margin-bottom: 3px; }
+.layer-item.pending .layer-name { color: #1a3040; }
+.layer-item.done-1 .layer-name { color: var(--cyan); }
+.layer-item.done-2 .layer-name { color: var(--green); }
+.layer-item.done-3 .layer-name { color: var(--amber); }
+.layer-item.done-5 .layer-name { color: var(--white); }
+.layer-item.active .layer-name { color: var(--amber); }
+
+.layer-val { font-family: var(--sans); font-size: 0.72rem; color: #1a3040; }
+.layer-item.done-1 .layer-val,
+.layer-item.done-2 .layer-val,
+.layer-item.done-3 .layer-val { color: var(--green); }
+.layer-item.done-5 .layer-val { color: var(--white); }
+.layer-item.active .layer-val { color: var(--amber); animation: blink 0.8s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* BOTTOM BAR */
+.bottom-bar {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg2);
+  font-size: 0.72rem;
+}
+.bottom-links { display: flex; gap: 24px; }
+.bottom-links a { color: #1a3040; text-decoration: none; transition: color 0.2s; }
+.bottom-links a:hover { color: var(--cyan); }
+.bottom-author { color: #1a3040; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="https://verifiedcar.com">verifiedcar.com</a> / demo
+  </div>
+  <div class="topbar-status">
+    <div class="status-dot"></div>
+    <span style="color:var(--green);font-size:0.72rem;">SOVEREIGN ROOT ONLINE</span>
+  </div>
+  <div class="topbar-right">W3C DID PR #671 · Dubai, UAE · 2026</div>
+</div>
+
+<div class="hero">
+  <div class="hero-tag">Live Sovereign Identity Demo</div>
+  <h1>Autonomous Vehicle<br><span class="accent">Sovereign Certification</span></h1>
+  <div class="hero-q">"Who am I? Is what I see real? Is the signal I receive real?"</div>
+  <div class="hero-sub">Watch a Level 5 autonomous vehicle resolve its sovereign identity through the W3C DID stack in real time. Three questions. Three roots. One certification. Sub-1ms.</div>
+  <button class="start-btn" id="startBtn" onclick="startDemo()">▶ LAUNCH SOVEREIGN DEMO</button>
+</div>
+
+<div class="demo-layout">
+
+  <!-- ROAD SCENE -->
+  <div class="road-scene">
+    <div class="scene-info">SHEIKH ZAYED ROAD · DUBAI · UAE</div>
+    <div class="scene-speed" id="sceneSpeed">120 km/h · AUTONOMOUS MODE</div>
+    <div class="cert-badge" id="certBadge">✓ did:level5 CERTIFIED</div>
+
+    <div class="road-container">
+
+      <!-- Resolution rings -->
+      <div class="resolution-rings" id="rings">
+        <div class="ring l1" id="ring1"></div>
+        <div class="ring l2" id="ring2"></div>
+        <div class="ring l3" id="ring3"></div>
+        <div class="ring l5" id="ring5"></div>
+      </div>
+
+      <!-- Vehicle -->
+      <div class="vehicle-wrap">
+        <div class="vehicle idle" id="vehicle">
+          <div class="car-top"></div>
+          <div class="car-body">
+            <div class="car-headlight"></div>
+          </div>
+          <div class="car-wheel left" id="wLeft"></div>
+          <div class="car-wheel right" id="wRight"></div>
+        </div>
+      </div>
+
+      <!-- Road -->
+      <div class="road">
+        <div class="road-line" id="roadLine"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TERMINAL -->
+  <div class="terminal-panel">
+    <div class="terminal-header">
+      <div class="terminal-title">SOVEREIGN RESOLVER · LIVE</div>
+      <div class="terminal-dots">
+        <div class="tdot r"></div>
+        <div class="tdot y"></div>
+        <div class="tdot g"></div>
+      </div>
+    </div>
+
+    <div class="terminal-body" id="termBody">
+      <div class="log-line">
+        <span class="log-time">00:00:000</span>
+        <span class="log-type sys">SYS</span>
+        <span class="log-msg">Sovereign enclave <span class="hi">online</span></span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">00:00:001</span>
+        <span class="log-type sys">SYS</span>
+        <span class="log-msg">Root: <span class="cyan">enclave.hardcodedlogic.com</span></span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">00:00:002</span>
+        <span class="log-type sys">SYS</span>
+        <span class="log-msg">Awaiting machine boot signal...</span>
+      </div>
+    </div>
+
+    <!-- LAYER STATUS -->
+    <div class="layer-status">
+      <div class="layer-item pending" id="l1item">
+        <div class="layer-name">did:verifiedcar · L1</div>
+        <div class="layer-val" id="l1val">PENDING</div>
+      </div>
+      <div class="layer-item pending" id="l2item">
+        <div class="layer-name">did:viewonwebsite · L2</div>
+        <div class="layer-val" id="l2val">PENDING</div>
+      </div>
+      <div class="layer-item pending" id="l3item">
+        <div class="layer-name">did:verifiedhz · L3</div>
+        <div class="layer-val" id="l3val">PENDING</div>
+      </div>
+      <div class="layer-item l5-item pending" id="l5item">
+        <div class="layer-name">did:level5 · MASTER CERTIFICATION</div>
+        <div class="layer-val" id="l5val">AWAITING ALL LAYERS</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-links">
+    <a href="https://verifiedcar.com">verifiedcar.com</a>
+    <a href="https://viewonwebsite.com">viewonwebsite.com</a>
+    <a href="https://verifiedhz.com">verifiedhz.com</a>
+    <a href="https://didlevel5.com">didlevel5.com</a>
+    <a href="https://w3cdid.com/spec">Specification</a>
+    <a href="https://github.com/w3c/did-extensions/pull/671">W3C PR #671</a>
+  </div>
+  <div class="bottom-author">Tamer Maher Eldebes · hardcodedlogic.com · Dubai, UAE · 2026</div>
+</div>
+
+<script>
+let running = false;
+let startTime = 0;
+
+function ts() {
+  const ms = Date.now() - startTime;
+  const s = Math.floor(ms / 1000).toString().padStart(2,'0');
+  const m = Math.floor(ms / 60000).toString().padStart(2,'0');
+  const msStr = (ms % 1000).toString().padStart(3,'0');
+  return m + ':' + s + ':' + msStr;
+}
+
+function log(type, msg, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const body = document.getElementById('termBody');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="log-time">${ts()}</span><span class="log-type ${type}">${type.toUpperCase()}</span><span class="log-msg">${msg}</span>`;
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+      resolve();
+    }, delay);
+  });
+}
+
+function setLayer(id, cls, val) {
+  document.getElementById(id + 'item').className = 'layer-item ' + (id === 'l5' ? 'l5-item ' : '') + cls;
+  document.getElementById(id + 'val').textContent = val;
+}
+
+function fireRing(id) {
+  const ring = document.getElementById(id);
+  ring.classList.remove('expand');
+  void ring.offsetWidth;
+  ring.classList.add('expand');
+}
+
+async function startDemo() {
+  if (running) return;
+  running = true;
+  startTime = Date.now();
+
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('startBtn').textContent = '● RUNNING...';
+
+  const vehicle = document.getElementById('vehicle');
+  const wLeft = document.getElementById('wLeft');
+  const wRight = document.getElementById('wRight');
+  const roadLine = document.getElementById('roadLine');
+  const sceneSpeed = document.getElementById('sceneSpeed');
+  const certBadge = document.getElementById('certBadge');
+
+  // BOOT
+  await log('sys', 'Machine boot detected · Vehicle ID: <span class="cyan">AV-SOVEREIGN-001</span>', 200);
+  await log('sys', 'Location: <span class="amber">Sheikh Zayed Road · Dubai · UAE</span>', 600);
+  await log('sys', 'Speed: <span class="white">0 km/h → 120 km/h</span>', 1000);
+
+  vehicle.className = 'vehicle verifying';
+
+  // LAYER 1
+  setLayer('l1', 'active', 'RESOLVING...');
+  await log('did', 'Querying <span class="cyan">did:verifiedcar:AV-SOVEREIGN-001</span>', 1400);
+  await log('did', 'Resolver: <span class="cyan">verifiedcar.com/.well-known/did.json</span>', 1800);
+  await log('did', 'Mojo Enclave handshake initiated...', 2200);
+
+  fireRing('ring1');
+
+  await log('ok', '<span class="green">✓ Identity confirmed</span> · 0.7ms · <span class="cyan">did:verifiedcar</span>', 2800);
+  await log('ok', 'Machine authorized · Identity gap: <span class="green">3.33m → CLOSED</span>', 3200);
+  setLayer('l1', 'done-1', '✓ 0.7ms');
+
+  // LAYER 2
+  setLayer('l2', 'active', 'RESOLVING...');
+  await log('did', 'Querying <span class="green">did:viewonwebsite:AV-SOVEREIGN-001</span>', 3600);
+  await log('did', 'Visual feed: checking render integrity...', 4000);
+  await log('warn', 'Injection attempt detected · Source: unknown', 4400);
+
+  fireRing('ring2');
+
+  await log('ok', '<span class="green">✓ Visual integrity confirmed</span> · 0.8ms', 4900);
+  await log('ok', 'Visual gap: <span class="green">6.67m → CLOSED</span> · No injection survived', 5200);
+  setLayer('l2', 'done-2', '✓ 0.8ms');
+
+  // LAYER 3
+  setLayer('l3', 'active', 'RESOLVING...');
+  await log('did', 'Querying <span class="amber">did:verifiedhz:GPS-1575.42MHz</span>', 5600);
+  await log('did', 'Signal frequency check: 1575.42 MHz L1 GPS', 6000);
+  await log('warn', 'Spoofed signal detected · +6 dBW override attempt', 6400);
+  await log('did', 'Enclave comparison: sovereign satellite fingerprint...', 6800);
+
+  fireRing('ring3');
+
+  await log('ok', '<span class="green">✓ Signal sovereign</span> · 0.8ms · Spoof rejected', 7200);
+  await log('ok', 'Signal gap: <span class="green">33.3m → CLOSED</span> · Position verified', 7600);
+  setLayer('l3', 'done-3', '✓ 0.8ms');
+
+  // LEVEL 5
+  setLayer('l5', 'active', 'CERTIFYING...');
+  await log('cert', '━━━ All layers confirmed · Issuing did:level5 ━━━', 8000);
+  await log('cert', 'did:verifiedcar ✓ · did:viewonwebsite ✓ · did:verifiedhz ✓', 8200);
+
+  fireRing('ring5');
+
+  await log('cert', '<span class="white">✓ did:level5 MASTER CERTIFICATION ISSUED</span>', 8700);
+  await log('cert', 'Total latency: <span class="green">0.97ms</span> · Safety margin: <span class="green">2.67cm</span>', 9000);
+  await log('cert', 'Fatal risk: <span class="white">43.3m → 2.67cm</span> · Machine sovereign', 9300);
+
+  setLayer('l5', 'done-5', '✓ CERTIFIED · 0.97ms');
+
+  // VEHICLE DRIVES
+  vehicle.className = 'vehicle certified';
+  wLeft.classList.add('spinning');
+  wRight.classList.add('spinning');
+  roadLine.classList.add('active');
+  sceneSpeed.classList.add('visible');
+  certBadge.classList.add('visible');
+
+  await log('sys', '<span class="green">▶ Vehicle operating on sovereign reality</span>', 9700);
+  await log('sys', 'Authority: <span class="cyan">hardcodedlogic.com</span> · W3C PR #671', 10000);
+  await log('sys', 'The logic was always hardcoded.', 10300);
+
+  document.getElementById('startBtn').textContent = '↺ RUN AGAIN';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startBtn').onclick = resetDemo;
+}
+
+function resetDemo() {
+  running = false;
+  startTime = 0;
+
+  document.getElementById('vehicle').className = 'vehicle idle';
+  document.getElementById('wLeft').classList.remove('spinning');
+  document.getElementById('wRight').classList.remove('spinning');
+  document.getElementById('roadLine').classList.remove('active');
+  document.getElementById('sceneSpeed').classList.remove('visible');
+  document.getElementById('certBadge').classList.remove('visible');
+
+  ['l1','l2','l3'].forEach(id => setLayer(id, 'pending', 'PENDING'));
+  setLayer('l5', 'pending', 'AWAITING ALL LAYERS');
+
+  ['ring1','ring2','ring3','ring5'].forEach(id => {
+    document.getElementById(id).classList.remove('expand');
+  });
+
+  const body = document.getElementById('termBody');
+  body.innerHTML = `
+    <div class="log-line"><span class="log-time">00:00:000</span><span class="log-type sys">SYS</span><span class="log-msg">Sovereign enclave <span class="hi">online</span></span></div>
+    <div class="log-line"><span class="log-time">00:00:001</span><span class="log-type sys">SYS</span><span class="log-msg">Root: <span class="cyan">enclave.hardcodedlogic.com</span></span></div>
+    <div class="log-line"><span class="log-time">00:00:002</span><span class="log-type sys">SYS</span><span class="log-msg">Awaiting machine boot signal...</span></div>
+  `;
+
+  document.getElementById('startBtn').textContent = '▶ LAUNCH SOVEREIGN DEMO';
+  document.getElementById('startBtn').onclick = startDemo;
+}
+</script>
+</body>
+</html>
