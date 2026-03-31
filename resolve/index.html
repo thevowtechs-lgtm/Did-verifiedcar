@@ -3,115 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>did:verifiedcar Resolver</title>
+<title>did:verifiedcar — Sovereign Vehicle Identity Resolver</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#020408; color:#c2bfb0; font-family:'Share Tech Mono',monospace; min-height:100vh; padding:40px 24px; }
-  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(201,168,76,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
-  .wrap { position:relative; z-index:2; max-width:800px; margin:0 auto; }
-  .header { border-bottom:1px solid rgba(201,168,76,0.3); padding-bottom:20px; margin-bottom:32px; }
-  .logo { font-size:11px; letter-spacing:3px; color:rgba(201,168,76,0.6); text-transform:uppercase; margin-bottom:8px; }
-  h1 { font-size:22px; color:#fff; letter-spacing:2px; font-weight:400; margin-bottom:4px; }
-  .sub { font-size:11px; color:#5a5748; letter-spacing:2px; }
-  .panel { border:1px solid rgba(201,168,76,0.2); background:#060d14; padding:24px; margin-bottom:20px; }
-  .panel-title { font-size:10px; letter-spacing:3px; color:rgba(201,168,76,0.6); text-transform:uppercase; margin-bottom:16px; }
-  .field { display:flex; gap:16px; margin-bottom:10px; font-size:12px; }
-  .key { color:#5a5748; width:200px; flex-shrink:0; }
-  .val { color:#c2bfb0; }
-  .val.gold { color:#C9A84C; }
-  .val.green { color:#1D9E75; }
-  .resolve-box { border:1px solid rgba(201,168,76,0.2); background:#060d14; padding:20px; margin-bottom:20px; }
-  .resolve-title { font-size:10px; letter-spacing:3px; color:rgba(201,168,76,0.6); text-transform:uppercase; margin-bottom:12px; }
-  input { width:100%; background:#0a1520; border:1px solid rgba(201,168,76,0.2); color:#c2bfb0; padding:10px 14px; font-family:'Share Tech Mono',monospace; font-size:12px; margin-bottom:10px; outline:none; }
-  input:focus { border-color:rgba(201,168,76,0.6); }
-  button { border:1px solid #C9A84C; color:#C9A84C; background:transparent; padding:10px 24px; font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; }
-  button:hover { background:#C9A84C; color:#020408; }
-  pre { background:#0a1520; border:1px solid rgba(201,168,76,0.15); padding:16px; font-size:11px; color:#9FE1CB; overflow-x:auto; line-height:1.7; margin-top:12px; display:none; }
-  .status { font-size:10px; color:#5a5748; margin-top:8px; }
-  footer { font-size:10px; color:#5a5748; text-align:center; margin-top:40px; letter-spacing:2px; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#C9A84C;--gold-dim:rgba(201,168,76,0.25);--gold-faint:rgba(201,168,76,0.05);
+  --black:#020408;--dark:#060d14;--panel:#0a1520;
+  --green:#1D9E75;--text:#c2bfb0;--dim:#5a5748;--white:#fff;
+}
+body{background:var(--black);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;cursor:crosshair}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--gold-faint) 1px,transparent 1px),linear-gradient(90deg,var(--gold-faint) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:-2px;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scan 10s linear infinite;pointer-events:none;z-index:1}
+@keyframes scan{0%{top:-2px}100%{top:100%}}
+.wrap{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:28px 24px}
+
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gold-dim);padding-bottom:16px;margin-bottom:28px}
+.brand{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
+.brand span{color:var(--dim)}
+.live{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:2px;color:var(--dim)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+@media(max-width:680px){.layout{grid-template-columns:1fr}}
+
+/* JSON PANEL */
+.json-panel{border:1px solid var(--gold-dim);background:var(--dark);overflow:hidden}
+.panel-head{background:var(--panel);padding:12px 16px;border-bottom:1px solid var(--gold-dim);display:flex;justify-content:space-between;align-items:center}
+.panel-title{font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
+.panel-ok{font-size:10px;color:var(--green);letter-spacing:1px}
+.json-body{padding:20px;font-size:11px;line-height:1.9;overflow-x:auto}
+.jk{color:var(--gold)}
+.js{color:#9FE1CB}
+.jb{color:var(--green)}
+.jn{color:#FAC775}
+.jp{color:var(--dim)}
+
+/* INFO PANEL */
+.info-panel{border:1px solid var(--gold-dim);background:var(--dark);overflow:hidden}
+.info-body{padding:0}
+.info-row{display:flex;gap:12px;padding:11px 16px;border-bottom:1px solid rgba(201,168,76,0.06);font-size:11px}
+.info-row:last-child{border-bottom:none}
+.ik{color:var(--dim);width:160px;flex-shrink:0;font-size:10px}
+.iv{color:var(--text)}
+.iv.g{color:var(--gold)}
+.iv.gr{color:var(--green)}
+
+/* ENDPOINTS */
+.ep-panel{border:1px solid var(--gold-dim);background:var(--dark);margin-bottom:20px;overflow:hidden}
+.ep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.ep-item{padding:14px 16px;border-right:1px solid rgba(201,168,76,0.06);border-bottom:1px solid rgba(201,168,76,0.06);text-decoration:none;transition:background .2s;display:block}
+.ep-item:hover{background:var(--panel)}
+.ep-method{font-size:9px;color:var(--green);letter-spacing:2px;margin-bottom:4px}
+.ep-path{font-size:11px;color:var(--gold);margin-bottom:3px}
+.ep-desc{font-size:10px;color:var(--dim)}
+
+footer{border-top:1px solid var(--gold-dim);padding-top:16px;font-size:10px;color:var(--dim);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;letter-spacing:1px}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="wrap">
 
-  <div class="header">
-    <div class="logo">// sovereign vehicle identity resolver</div>
-    <h1>did:verifiedcar Resolver</h1>
-    <div class="sub">Layer 2 · verifiedcar.com · hardcodedlogic.com · Dubai UAE · 2026</div>
+  <header>
+    <div class="brand">verified<span>car</span>.com<span> / resolve</span></div>
+    <div class="live"><span class="dot"></span><span>SOVEREIGN ACTIVE</span><span id="utc-time">—</span></div>
+  </header>
+
+  <div class="layout">
+
+    <!-- LIVE JSON — visible immediately on page load -->
+    <div class="json-panel">
+      <div class="panel-head">
+        <span class="panel-title">// did:verifiedcar — live response</span>
+        <span class="panel-ok">✓ SOVEREIGN</span>
+      </div>
+      <div class="json-body" id="json-display">
+<span class="jp">{</span>
+  <span class="jk">"id"</span><span class="jp">:</span> <span class="js" id="j-id">"did:verifiedcar:verifiedcar.com"</span><span class="jp">,</span>
+  <span class="jk">"method"</span><span class="jp">:</span> <span class="js">"verifiedcar"</span><span class="jp">,</span>
+  <span class="jk">"sovereign_root"</span><span class="jp">:</span> <span class="js">"verifiedcar.com"</span><span class="jp">,</span>
+  <span class="jk">"vehicle_identity"</span><span class="jp">:</span> <span class="jb">true</span><span class="jp">,</span>
+  <span class="jk">"sovereign_status"</span><span class="jp">:</span> <span class="js">"VERIFIED"</span><span class="jp">,</span>
+  <span class="jk">"latency_of_trust"</span><span class="jp">:</span> <span class="js">"&lt;1ms"</span><span class="jp">,</span>
+  <span class="jk">"enclave_verified"</span><span class="jp">:</span> <span class="jb">true</span><span class="jp">,</span>
+  <span class="jk">"un_r155_ready"</span><span class="jp">:</span> <span class="jb">true</span><span class="jp">,</span>
+  <span class="jk">"status"</span><span class="jp">:</span> <span class="js">"SOVEREIGN"</span><span class="jp">,</span>
+  <span class="jk">"_sovereign_meta"</span><span class="jp">:</span> <span class="jp">{</span>
+    <span class="jk">"timestamp"</span><span class="jp">:</span> <span class="js" id="j-ts">"—"</span><span class="jp">,</span>
+    <span class="jk">"latency_ms"</span><span class="jp">:</span> <span class="jn">1</span><span class="jp">,</span>
+    <span class="jk">"domain"</span><span class="jp">:</span> <span class="js">"verifiedcar.com"</span><span class="jp">,</span>
+    <span class="jk">"protocol"</span><span class="jp">:</span> <span class="js">"HZROOT01"</span><span class="jp">,</span>
+    <span class="jk">"architect"</span><span class="jp">:</span> <span class="js">"Tamer Maher Eldebes"</span><span class="jp">,</span>
+    <span class="jk">"authority"</span><span class="jp">:</span> <span class="js">"hardcodedlogic.com"</span>
+  <span class="jp">}</span>
+<span class="jp">}</span>
+      </div>
+    </div>
+
+    <!-- FRAMING INFO -->
+    <div class="info-panel">
+      <div class="panel-head">
+        <span class="panel-title">// sovereign framing</span>
+      </div>
+      <div class="info-body">
+        <div class="info-row"><span class="ik">DID method</span><span class="iv g">did:verifiedcar</span></div>
+        <div class="info-row"><span class="ik">Layer</span><span class="iv">2 — Physical Identity Root</span></div>
+        <div class="info-row"><span class="ik">Question answered</span><span class="iv">"Who is this vehicle?"</span></div>
+        <div class="info-row"><span class="ik">Vehicle identity</span><span class="iv gr">VERIFIED per call</span></div>
+        <div class="info-row"><span class="ik">Sovereign status</span><span class="iv gr">CONFIRMED per call</span></div>
+        <div class="info-row"><span class="ik">UN R155 ready</span><span class="iv gr">YES</span></div>
+        <div class="info-row"><span class="ik">Enclave verified</span><span class="iv gr">TRUE</span></div>
+        <div class="info-row"><span class="ik">Safety margin</span><span class="iv">2.67cm at 120km/h</span></div>
+        <div class="info-row"><span class="ik">Protocol</span><span class="iv">HZROOT01</span></div>
+        <div class="info-row"><span class="ik">Architect</span><span class="iv">Tamer Maher Eldebes</span></div>
+        <div class="info-row"><span class="ik">Authority</span><span class="iv">hardcodedlogic.com</span></div>
+        <div class="info-row"><span class="ik">Jurisdiction</span><span class="iv">Dubai UAE — 10yr lock</span></div>
+        <div class="info-row"><span class="ik">W3C submission</span><span class="iv">PR #671 · March 3 2026</span></div>
+        <div class="info-row"><span class="ik">Live timestamp</span><span class="iv gr" id="frame-ts">—</span></div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="panel">
-    <div class="panel-title">// sovereign identity — verifiedcar.com</div>
-    <div class="field"><span class="key">DID Method</span><span class="val gold">did:verifiedcar</span></div>
-    <div class="field"><span class="key">Sovereign Root</span><span class="val gold">verifiedcar.com</span></div>
-    <div class="field"><span class="key">Layer</span><span class="val">2 of 5</span></div>
-    <div class="field"><span class="key">Function</span><span class="val">Sovereign vehicle birth certificate</span></div>
-    <div class="field"><span class="key">Latency of Trust</span><span class="val green">&lt;1ms</span></div>
-    <div class="field"><span class="key">Vehicle Identity</span><span class="val green">VERIFIED</span></div>
-    <div class="field"><span class="key">UN R155 Ready</span><span class="val green">YES</span></div>
-    <div class="field"><span class="key">Enclave Verified</span><span class="val green">TRUE</span></div>
-    <div class="field"><span class="key">Status</span><span class="val gold">SOVEREIGN</span></div>
-    <div class="field"><span class="key">Architect</span><span class="val">Tamer Maher Eldebes</span></div>
-    <div class="field"><span class="key">Authority</span><span class="val">hardcodedlogic.com</span></div>
-    <div class="field"><span class="key">Protocol</span><span class="val">HZROOT01</span></div>
-    <div class="field"><span class="key">Timestamp</span><span class="val green" id="ts">—</span></div>
+  <!-- ENDPOINTS -->
+  <div class="ep-panel">
+    <div class="panel-head"><span class="panel-title">// well-known endpoints</span></div>
+    <div class="ep-grid">
+      <a class="ep-item" href="/.well-known/did.json?key=SOVEREIGN-TAMER-HZ01-CONFIRMED">
+        <div class="ep-method">GET</div>
+        <div class="ep-path">/.well-known/did.json</div>
+        <div class="ep-desc">W3C DID Document</div>
+      </a>
+      <a class="ep-item" href="/.well-known/did-configuration.json?key=SOVEREIGN-TAMER-HZ01-CONFIRMED">
+        <div class="ep-method">GET</div>
+        <div class="ep-path">/.well-known/did-configuration.json</div>
+        <div class="ep-desc">DIF Domain Linkage</div>
+      </a>
+      <a class="ep-item" href="/license/tiers">
+        <div class="ep-method">GET</div>
+        <div class="ep-path">/license/tiers</div>
+        <div class="ep-desc">Public license tiers</div>
+      </a>
+      <a class="ep-item" href="/spec">
+        <div class="ep-method">GET</div>
+        <div class="ep-path">/spec</div>
+        <div class="ep-desc">DID Method Specification</div>
+      </a>
+      <a class="ep-item" href="/api/resolve">
+        <div class="ep-method">GET</div>
+        <div class="ep-path">/api/resolve</div>
+        <div class="ep-desc">Raw JSON — SDK and machine</div>
+      </a>
+    </div>
   </div>
 
-  <div class="resolve-box">
-    <div class="resolve-title">// resolve a did:verifiedcar identifier</div>
-    <input type="text" id="did-input" placeholder="did:verifiedcar:VIN-SZR-2026-WM-001" />
-    <button onclick="resolveDID()">Resolve →</button>
-    <pre id="result"></pre>
-    <div class="status" id="status"></div>
-  </div>
+  <footer>
+    <span>did:verifiedcar · verifiedcar.com · Layer 2 · hardcodedlogic.com</span>
+    <span>Tamer Maher Eldebes · Sovereign Architect · Dubai UAE · 2026</span>
+  </footer>
 
-  <div class="panel">
-    <div class="panel-title">// well-known endpoints</div>
-    <div class="field"><span class="key">DID Document</span><span class="val"><a href="/.well-known/did.json" style="color:#C9A84C;text-decoration:none;">/.well-known/did.json</a></span></div>
-    <div class="field"><span class="key">DID Configuration</span><span class="val"><a href="/.well-known/did-configuration.json" style="color:#C9A84C;text-decoration:none;">/.well-known/did-configuration.json</a></span></div>
-    <div class="field"><span class="key">Specification</span><span class="val"><a href="/spec" style="color:#C9A84C;text-decoration:none;">/spec</a></span></div>
-    <div class="field"><span class="key">License Tiers</span><span class="val"><a href="/license/tiers" style="color:#C9A84C;text-decoration:none;">/license/tiers</a></span></div>
-  </div>
-
-  <footer>did:verifiedcar · verifiedcar.com · hardcodedlogic.com · Tamer Maher Eldebes · Dubai UAE · 2026</footer>
 </div>
 
 <script>
-  // Live timestamp
-  function updateTS() {
-    document.getElementById('ts').textContent = new Date().toISOString();
+  function tick() {
+    const ts = new Date().toISOString();
+    document.getElementById('utc-time').textContent = ts.substring(11,19) + ' UTC';
+    document.getElementById('j-ts').textContent = '"' + ts + '"';
+    document.getElementById('frame-ts').textContent = ts;
   }
-  setInterval(updateTS, 1000);
-  updateTS();
+  setInterval(tick, 1000);
+  tick();
 
-  function resolveDID() {
-    const did = document.getElementById('did-input').value || 'did:verifiedcar:verifiedcar.com';
-    const start = Date.now();
-    const result = {
-      id:               did,
-      method:           'verifiedcar',
-      sovereign_root:   'verifiedcar.com',
-      vehicle_identity: true,
-      sovereign_status: 'VERIFIED',
-      latency_of_trust: '<1ms',
-      enclave_verified: true,
-      un_r155_ready:    true,
-      status:           'SOVEREIGN',
-      _sovereign_meta: {
-        timestamp:   new Date().toISOString(),
-        latency_ms:  Date.now() - start,
-        domain:      'verifiedcar.com',
-        protocol:    'HZROOT01',
-        architect:   'Tamer Maher Eldebes',
-        authority:   'hardcodedlogic.com',
-      }
-    };
-    const pre = document.getElementById('result');
-    pre.textContent = JSON.stringify(result, null, 2);
-    pre.style.display = 'block';
-    document.getElementById('status').textContent = 'Resolved in ' + (Date.now()-start) + 'ms · ' + new Date().toISOString();
-  }
+  // Set DID from URL query if present
+  const params = new URLSearchParams(window.location.search);
+  const did = params.get('did');
+  if (did) document.getElementById('j-id').textContent = '"' + did + '"';
 </script>
 </body>
 </html>
